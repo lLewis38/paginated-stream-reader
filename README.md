@@ -46,3 +46,10 @@ The file is opened and closed on every `readRange` call rather than holding a lo
 - A range that *partially* overshoots EOF returns the bytes that are available, truncated. Asking for 20 bytes at offset 250 of a 256-byte file yields a 6-byte buffer.
 - `length === 0` is a true no-op: it returns an empty buffer without touching the disk, so you can call it on a path that does not exist yet without getting an error. Use a non-zero length if you want the missing-file error to surface.
 - The file is reopened on every call. If you read 10 000 tiny ranges in a tight loop, you pay 10 000 `open` syscalls. For that workload, hold your own handle and use `fs/promises` `FileHandle.read` directly; this library is optimised for clarity, not for microbenchmarks.
+
+## Performance
+
+The window keeps a bounded buffer, so `push` is constant time and memory does not
+grow with the length of the stream. `peak` and `trough` are linear in the window
+size, which is the trade that keeps `push` cheap.
+
